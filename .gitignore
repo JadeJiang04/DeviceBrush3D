@@ -1,0 +1,6 @@
+build/
+output/
+SpatialPen.xcodeproj/
+Info.plist
+build.log
+.DS_Store

@@ -1,0 +1,39 @@
+name: SpatialPen
+options:
+  deploymentTarget:
+    iOS: '16.0'
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    TARGETED_DEVICE_FAMILY: '2'
+    CODE_SIGNING_ALLOWED: NO
+targets:
+  SpatialPen:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jadejiang04.spatialpen
+        MARKETING_VERSION: '0.6'
+        CURRENT_PROJECT_VERSION: '6'
+        GENERATE_INFOPLIST_FILE: NO
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: 空间画笔
+        NSCameraUsageDescription: 用相机跟踪 iPad，在真实空间绘制线条与平面。
+        UIRequiredDeviceCapabilities: [arm64, arkit]
+        UIRequiresFullScreen: true
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+schemes:
+  SpatialPen:
+    build:
+      targets:
+        SpatialPen: all
