@@ -106,4 +106,8 @@ xcrun swiftc Sources/DrawingGeometry.swift Tests/main.swift -o build/geometry-ch
 - [Apple · iPad Pro 11 英寸第四代尺寸图](https://developer.apple.com/download/files/accessories/dimensional-drawings/ipad-pro-11-inch-4th-generation.pdf)：用于机身及镜头位置估算。
 - [Apple · ARCamera.transform](https://developer.apple.com/documentation/arkit/arcamera/transform)：相机位姿及固定设备坐标系定义。
 
-维护者：[JadeJiang04](https://github.com/JadeJiang04)。当前未指定开源许可证。
+## 许可证
+
+本项目使用 [MIT License](LICENSE)，允许使用、修改、分发和商用，须保留版权及许可声明。软件按现状提供，不承诺测量精度或特定用途的适用性。
+
+维护者：[JadeJiang04](https://github.com/JadeJiang04)。
