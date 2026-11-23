@@ -9,28 +9,12 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Prepare Xcode project
+      - name: Install project generator
         run: |
           set -euo pipefail
-          xcodebuild -version
           brew install xcodegen
-          xcodegen generate
-      - name: Build unsigned device app
-        run: |
-          set -euo pipefail
-          xcodebuild -project SpatialPen.xcodeproj -scheme SpatialPen \
-            -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
-            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build | tee build.log
-      - name: Package unsigned IPA
-        run: |
-          set -euo pipefail
-          mkdir -p output/Payload
-          cp -R build/Build/Products/Release-iphoneos/SpatialPen.app output/Payload/
-          test -f output/Payload/SpatialPen.app/SpatialPen
-          plutil -lint output/Payload/SpatialPen.app/Info.plist
-          cd output
-          zip -qry SpatialPen-unsigned.ipa Payload
-          shasum -a 256 SpatialPen-unsigned.ipa > SHA256SUMS.txt
+      - name: Check geometry and build unsigned IPA
+        run: bash scripts/build-ios.sh
       - uses: actions/upload-artifact@v4
         with:
           name: SpatialPen-unsigned
