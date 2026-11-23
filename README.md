@@ -1,10 +1,12 @@
 # CornerSketch · 角绘
 
+[![Build iPad App](https://github.com/JadeJiang04/CornerSketch/actions/workflows/build-ipad.yml/badge.svg)](https://github.com/JadeJiang04/CornerSketch/actions/workflows/build-ipad.yml)
+
 **把 iPad 的一角当成画笔，在真实空间中画线、连接顶点、构建简单立体结构。**
 
 CornerSketch 是一个原生 iPad 空间绘图原型，使用 SwiftUI、ARKit 和 SceneKit。移动设备即可绘制，后置相机观察普通环境辅助定位，无需打印定位图。
 
-> 当前为实验原型。相同绘图源码已在 iPad 的 Swift Playground 实时视图中运行；独立 App 的云端构建、签名安装及全屏显示仍待验证。仓库里的工作流生成 **未签名 IPA**，不能直接安装。
+> 当前为实验原型。相同绘图源码已在 iPad 的 Swift Playground 实时视图中运行；2026-11-24 首次云端原生构建成功，63 项几何检查通过，IPA 校验值核对一致。**签名安装及真机全屏显示仍待验证**。工作流生成的是未签名 IPA，不能直接安装。
 
 ## 能做什么
 
