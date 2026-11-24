@@ -1,98 +1,103 @@
-# CornerSketch · 角绘
+# DeviceBrush 3D
 
-[![Build iPad App](https://github.com/JadeJiang04/CornerSketch/actions/workflows/build-ipad.yml/badge.svg)](https://github.com/JadeJiang04/CornerSketch/actions/workflows/build-ipad.yml)
+**Like [Google's Just a Line](https://github.com/googlecreativelab/justaline-ios), DeviceBrush 3D lets you draw in 3D space with AR. It changes the interaction by placing a virtual brush tip beyond the device's upper-left corner, and refines the drawing experience with editable lines, merged vertices, colored faces, and pencil-style strokes.**
 
-**把 iPad 的一角当成画笔，在真实空间中画线、连接顶点、构建简单立体结构。**
+Turn your phone or tablet into a 3D brush: move the device itself to shape your drawing. **The current implementation targets iPad; iPhone and Android support are not implemented in this repository.** Built with SwiftUI, ARKit, and SceneKit, it tracks ordinary surroundings through the rear camera without printed markers.
 
-CornerSketch 是一个原生 iPad 空间绘图原型，使用 SwiftUI、ARKit 和 SceneKit。移动设备即可绘制，后置相机观察普通环境辅助定位，无需打印定位图。
+English | [简体中文](docs/README.zh-CN.md)
 
-> 当前为实验原型。相同绘图源码已在 iPad 的 Swift Playground 实时视图中运行；2026-11-24 首次云端原生构建成功，63 项几何检查通过，IPA 校验值核对一致。**签名安装及真机全屏显示仍待验证**。工作流生成的是未签名 IPA，不能直接安装。
+[![Build iPad App](https://github.com/JadeJiang04/DeviceBrush3D/actions/workflows/build-ipad.yml/badge.svg)](https://github.com/JadeJiang04/DeviceBrush3D/actions/workflows/build-ipad.yml)
 
-## 能做什么
+> Experimental prototype. The drawing sources have run in Swift Playground on an iPad. A native cloud build succeeded on November 24, 2026, with all 63 geometry checks passing and the IPA checksum verified. **Signing, installation, and native full-screen behavior still need device verification.** The workflow produces an unsigned IPA, which cannot be installed directly.
 
-| 功能 | 使用方式 |
+## Drawing tools
+
+| Feature | How it works |
 | --- | --- |
-| 设备角画笔 | 以当前屏幕左上角的虚拟延伸点取点，橙色十字标记实际投影位置 |
-| 连续绘制 | 长按绘制，移动 iPad，松手结束一笔 |
-| 笔迹简化 | 松手后简化为三维折线，保留明显拐角，只公开首尾两个顶点 |
-| 两点直线 | 分别记录起点和终点，直接连接直线 |
-| 颜色与笔触 | 七种颜色、铅笔颗粒或实线，连续笔迹宽度可调 |
-| 几何编辑 | 从顶点按方向和长度添加线段，修改长度、缩短、水平或轴向矫正 |
-| 顶点与面 | 手动合并两个顶点；三个不共线顶点生成可改色的三角面 |
-| 小窗操作 | 工具窗默认位于右下角；工具窗和可拖动的编辑窗均可收起 |
-| 数据导出 | 导出 JSON，包含顶点、线段、笔迹、三角面及坐标定义 |
+| Device-corner brush | Draw from a virtual extension of the upper-left corner; an orange crosshair marks its projected position. |
+| Continuous strokes | Hold the draw button, move the device, and release to finish. |
+| Simplified paths | Reduce strokes to 3D polylines while preserving distinct corners; only the two endpoints appear as editable vertices. |
+| Two-point lines | Capture a start and an end to create a straight segment. |
+| Colors and strokes | Choose seven colors, pencil grain or solid strokes, and an adjustable continuous-stroke width. |
+| Geometry editing | Add a segment from a vertex using a direction and length; resize, shorten, or align geometry horizontally or to an axis. |
+| Vertices and faces | Manually merge two vertices or create a colored triangle from three non-collinear vertices. |
+| Compact controls | Collapse the lower-right tool panel and the draggable editing panel. |
+| JSON export | Save vertices, segments, paths, triangular faces, and coordinate-frame metadata. |
 
-## 开始绘制
+## Start drawing
 
-1. 允许相机访问，让后置镜头对准有纹理、光线充足的桌面或键盘，缓慢移动到“已定位”。
-2. 保持“设备画笔”，检查橙色十字的位置；在设置中调整角外延伸和镜头前伸距离。
-3. 按住绘制按钮，移动设备，松手结束；或展开工具窗切换“两点直线”。
-4. 点“编辑”选择顶点、改长度或生成彩色面。内部折线转折点不作为可选顶点展示。
-5. 展开工具窗，向下滚动到“导出”，保存绘图 JSON。
+The current app interface is in Chinese; the labels below help you find each control.
 
-空闲时笔尖会随屏幕方向选择左上角，正在绘制或记录起终点时锁定物理角，避免中途换角造成跳点。
+1. Allow camera access. Point the rear camera at a well-lit, textured surface and move slowly until tracking is ready (`已定位`).
+2. Keep Device Brush (`设备画笔`) selected and check the orange crosshair. Adjust the corner extension and forward offset in settings as needed.
+3. Hold the draw button, move the device, and release. Alternatively, expand the tools and choose Two-point Line (`两点直线`).
+4. Open Edit (`编辑`) to select vertices, adjust lengths, or create colored faces. Internal bends are not exposed as selectable vertices.
+5. Expand the tool panel and scroll to Export (`导出`) to save a drawing as JSON.
 
-### 长度和坐标
+While idle, the tip follows the upper-left corner of the current screen orientation. During a stroke or two-point capture, it stays attached to the same physical corner to avoid a sudden tip change.
 
-- 使用 ARKit 的相机位姿，不自行对加速度做二次积分。
-- 用户坐标为右手系，**X/Y 水平，Z 向上**；可用两个已有顶点校正原点与 +X 方向。
-- 连续笔迹默认简化容差为 **3 mm**，设置可调 1–10 mm，仅对新笔迹生效。这是几何简化容差，不是测量精度。
-- 笔迹总长度沿简化折线计算。修改目标长度以起点为中心等比例缩放；减少长度从末端沿线裁切。
-- `paths.points` 为当前几何，`paths.rawPoints` 保留原始采样；编辑后不会覆盖原始采样。
-- 默认虚拟笔尖向角外延伸 0.5 cm、向镜头前方延伸 8 cm；它不是贴在机身表面的接触式探头。
+### Coordinates and lengths
 
-## 设备与边界
+- Tracking uses ARKit camera poses, rather than a custom double integration of accelerometer readings.
+- The user coordinate frame is right-handed: **X/Y are horizontal and Z points up**. Two existing vertices can define the origin and +X direction.
+- Stroke simplification defaults to **3 mm**, adjustable from 1–10 mm for new strokes. This is a geometry tolerance, **not measurement accuracy**.
+- Path length follows the simplified polyline. Setting a target length scales the path around its first point; shortening trims it from the tail along the path.
+- `paths.points` stores current geometry; `paths.rawPoints` retains the original samples even after edits.
+- The default virtual tip extends 0.5 cm beyond the corner and 8 cm forward toward the scene. It is not a contact probe on the device body.
 
-已连接验证的设备为 **iPad Pro 11 英寸第四代，iPad14,3**。目前仅此型号内置机身和镜头尺寸预设，其他型号需手动填写偏移。工程最低部署目标为 iPadOS 16，需要支持 ARKit 的设备；其他设备尚未验证。
+## Device support and limitations
 
-- 笔尖偏移基于机身图纸估算，未完成实物精度标定；不保证厘米级或毫米级测量精度。
-- 反光、弱纹理、低照度、遮挡和快速运动会影响跟踪。中断或明显跳变会结束当前笔迹。
-- 面目前是**手动三点形成的三角面**，尚不支持自动给任意闭合笔迹填面。
-- 编辑窗打开期间暂停取点；关闭后继续绘制。
-- 重启会开始新 AR 会话。JSON 可保留几何数据，但尚未实现 ARWorldMap 保存和场景恢复。
-- 独立 App 使用全屏配置，最终表现需在完成签名安装后验证；已有 Playground 版本仍受其外围界面限制。
+The tested device is an **11-inch iPad Pro (4th generation), iPad14,3**. Only this model currently has a built-in body and camera dimension preset; other models require manual offsets. The native target is iPad-only, requires ARKit, and has a minimum deployment target of iPadOS 16. Other devices have not been verified.
 
-## 项目结构
+- Tip offsets are estimated from device drawings and have not been physically calibrated. Centimeter or millimeter measurement accuracy is not guaranteed.
+- Reflections, low texture, poor lighting, occlusion, and fast movement can degrade tracking. Tracking interruptions or large jumps end the current stroke.
+- Faces are manually created triangles, not automatic fills for arbitrary closed strokes.
+- Capture pauses while the editor is open; close it to resume drawing.
+- Restarting begins a new AR session. JSON preserves geometry, but ARWorldMap persistence and scene restoration are not implemented.
+- The native app is configured for full-screen use, pending a signed installation test. The Playground version remains constrained by its host interface.
+
+## Repository layout
 
 ```text
 Sources/
-  SpatialPenApp.swift          原生 App 入口
-  ContentView.swift            相机覆盖层、工具窗与设置
-  ARMeasurementController.swift  AR 跟踪、绘制、撤销及导出
-  MeasurementModel.swift       UI 状态、机型与笔尖偏移
-  DrawingGeometry.swift       几何模型、简化、共享顶点与编辑
-  GeometryEditorView.swift     顶点、长度、坐标轴与面编辑
-  StrokeRendering.swift       三维铅笔笔触与长按交互
-Tests/main.swift              63 项几何与采样检查
-scripts/build-ios.sh           本地与 CI 共用的构建脚本
-project.yml                   XcodeGen 项目定义
-.github/workflows/build-ipad.yml  手动触发的 Mac 构建
+  SpatialPenApp.swift            Native app entry point
+  ContentView.swift              Camera overlay, tools, and settings
+  ARMeasurementController.swift AR tracking, capture, undo, and export
+  MeasurementModel.swift        UI state, device presets, and tip offsets
+  DrawingGeometry.swift         Geometry, simplification, and shared-vertex editing
+  GeometryEditorView.swift       Vertex, length, axis, and face controls
+  StrokeRendering.swift         3D pencil strokes and press-and-hold input
+Tests/main.swift                63 geometry and sampling checks
+docs/README.zh-CN.md             Chinese documentation
+scripts/build-ios.sh            Shared local and CI build script
+project.yml                     XcodeGen project definition
+.github/workflows/build-ipad.yml Manual macOS build workflow
 ```
 
-项目内部暂保留 `SpatialPen` 作为 target、scheme 和数据文件名称，以延续现有原型；仓库展示名称为 CornerSketch。
+The public project name is **DeviceBrush 3D**. Internal target, scheme, and data filenames retain `SpatialPen` for continuity with the existing prototype.
 
-## 构建
+## Build
 
-### 使用 GitHub Actions（Windows 也可操作）
+### GitHub Actions, including from Windows
 
-1. 进入仓库的 **Actions → Build iPad App → Run workflow**。
-2. 工作流在 Mac runner 上运行几何检查，再用 Xcode 构建设备版应用。
-3. 成功后下载 `SpatialPen-unsigned` artifact，解压得到 `SpatialPen-unsigned.ipa` 和 `SHA256SUMS.txt`。
-4. 使用自己的 Apple 签名身份完成签名，再安装到设备。工作流本身不需要 Apple 账号、证书或设备配对文件。
+1. Open **Actions → Build iPad App → Run workflow** in this repository.
+2. The macOS runner executes geometry checks and builds the device app with Xcode.
+3. Download the `SpatialPen-unsigned` artifact to obtain `SpatialPen-unsigned.ipa` and `SHA256SUMS.txt`.
+4. Sign the app with your own Apple signing identity before installing it. The workflow itself does not need Apple credentials, certificates, or device pairing files.
 
-工作流仅手动启动，最长运行 20 分钟，构建产物保存 3 天。GitHub 对公开与私有仓库的额度不同，运行前以账号当前的 [Actions 计费规则](https://docs.github.com/en/actions/concepts/billing-and-usage)为准。
+The workflow runs only on manual request, has a 20-minute timeout, and retains artifacts for three days. As checked on November 24, 2026, **this public repository's standard `macos-15` runner has free compute usage**. Private repositories use plan allowances; larger runners can incur charges even in public repositories. Artifact and cache storage have separate allowances and billing rules. See [GitHub Actions billing and usage](https://docs.github.com/en/actions/concepts/billing-and-usage) and [storage and paid usage details](https://docs.github.com/en/billing/concepts/product-billing/github-actions). These are cloud-build costs, separate from Apple signing or distribution requirements.
 
-### 在 Mac 上构建
+### On a Mac
 
-安装 Xcode 命令行工具及 [XcodeGen](https://github.com/yonaskolb/XcodeGen)，然后执行：
+Install Xcode and its command-line tools, plus [XcodeGen](https://github.com/yonaskolb/XcodeGen), then run:
 
 ```bash
 bash scripts/build-ios.sh
 ```
 
-输出为 `output/SpatialPen-unsigned.ipa`。也可用 Xcode 打开生成的 `SpatialPen.xcodeproj`，选择自己的开发团队完成签名。项目默认关闭签名；使用 Xcode 签名运行时需将 `CODE_SIGNING_ALLOWED` 改为 `YES` 并配置相应团队。
+The output is `output/SpatialPen-unsigned.ipa`. To sign and run through Xcode, open the generated `SpatialPen.xcodeproj`, set `CODE_SIGNING_ALLOWED` to `YES`, and select your development team. Signing is disabled by default.
 
-仅运行几何检查：
+To run only the geometry checks:
 
 ```bash
 mkdir -p build
@@ -100,16 +105,16 @@ xcrun swiftc Sources/DrawingGeometry.swift Tests/main.swift -o build/geometry-ch
 ./build/geometry-checks
 ```
 
-这些检查涵盖简化、误差约束、坐标校正、长度编辑、共享端点、非法操作回滚及 JSON 往返。此前 63 项检查已在 iPad 执行通过；它们不替代真实移动距离与笔尖位置的物理测量验证。
+The checks cover simplification, error bounds, coordinate calibration, length edits, shared endpoints, rollback of invalid operations, and JSON round trips. All 63 checks have passed on iPad and in the native cloud build. They do not replace physical validation of movement distances and tip placement.
 
-## 参考
+## References
 
-- [Google Creative Lab · Just a Line iOS](https://github.com/googlecreativelab/justaline-ios)：参考空间线条组织与渲染思路；未将其源码打包进本仓库。
-- [Apple · iPad Pro 11 英寸第四代尺寸图](https://developer.apple.com/download/files/accessories/dimensional-drawings/ipad-pro-11-inch-4th-generation.pdf)：用于机身及镜头位置估算。
-- [Apple · ARCamera.transform](https://developer.apple.com/documentation/arkit/arcamera/transform)：相机位姿及固定设备坐标系定义。
+- [Google Creative Lab · Just a Line iOS](https://github.com/googlecreativelab/justaline-ios): a reference for AR line drawing and rendering; its source is not bundled in this repository.
+- [Apple · 11-inch iPad Pro (4th generation) dimensional drawings](https://developer.apple.com/download/files/accessories/dimensional-drawings/ipad-pro-11-inch-4th-generation.pdf): used to estimate body and camera positions.
+- [Apple · ARCamera.transform](https://developer.apple.com/documentation/arkit/arcamera/transform): camera pose and device coordinate conventions.
 
-## 许可证
+## License
 
-本项目使用 [MIT License](LICENSE)，允许使用、修改、分发和商用，须保留版权及许可声明。软件按现状提供，不承诺测量精度或特定用途的适用性。
+[MIT License](LICENSE). Use, modification, redistribution, and commercial use are permitted with the copyright and license notice retained. The software is provided as is, without a promise of measurement accuracy or fitness for a particular purpose.
 
-维护者：[JadeJiang04](https://github.com/JadeJiang04)。
+Maintained by [JadeJiang04](https://github.com/JadeJiang04).
